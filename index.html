@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday! 🎉</title>
+    <style>
+        :root {
+            --primary: #ff477e;
+            --primary-hover: #ff2a63;
+            --bg-gradient: linear-gradient(135deg, #ffe5ec 0%, #ffc2d1 50%, #f9bec7 100%);
+            --text-color: #2b2d42;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            position: relative;
+            padding: 20px;
+        }
+
+        /* Canvas for confetti */
+        #confetti-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Main Container Card */
+        .card {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            max-width: 450px;
+            width: 100%;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            z-index: 2;
+            transform: translateY(0);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            animation: fadeIn 1s ease-out;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        /* Decorative Elements */
+        .cake-emoji {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            display: inline-block;
+            animation: bounce 2s infinite ease-in-out;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+
+        .name {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            color: #4a4e69;
+        }
+
+        p {
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            color: #5c677d;
+        }
+
+        /* Action Buttons */
+        .btn-group {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+            box-shadow: 0 4px 15px rgba(255, 71, 126, 0.3);
+        }
+
+        .btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-secondary {
+            background-color: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+            box-shadow: none;
+        }
+
+        .btn-secondary:hover {
+            background-color: rgba(255, 71, 126, 0.1);
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.05); }
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 480px) {
+            .card {
+                padding: 30px 20px;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .name {
+                font-size: 1.5rem;
+            }
+            p {
+                font-size: 0.95rem;
+            }
+            .btn {
+                padding: 12px 24px;
+                font-size: 0.95rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="card">
+        <span class="cake-emoji" role="img" aria-label="Birthday Cake">🎂</span>
+        <h1>Happy Birthday!</h1>
+        <div class="name">[Name Here]</div>
+        <p>
+            Wishing you a day filled with laughter, love, and wonderful surprises. May this upcoming year bring you endless joy, success, and everything your heart desires! ✨
+        </p>
+        <div class="btn-group">
+            <button class="btn" onclick="triggerConfetti()">🎉 Celebrate!</button>
+            <button class="btn btn-secondary" onclick="changeWishes()">✨ Read Another Wish</button>
+        </div>
+    </div>
+
+    <script>
+        // Custom dynamic layout window resize adjustments 
+        const canvas = document.getElementById('confetti-canvas');
+        const ctx = canvas.getContext('2d');
+        let pieces = [];
+        let numberOfPieces = 0;
+        const colors = ['#f54291', '#f59e42', '#f5f042', '#42f563', '#42b6f5', '#8f42f5'];
+
+        function resizeCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        class ConfettiParticle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height - canvas.height;
+                this.rotation = Math.random() * 360;
+                this.rotationSpeed = Math.random() * 10 - 5;
+                this.radius = Math.random() * 4 + 4;
+                this.color = colors[Math.floor(Math.random() * colors.length)];
+                this.speedY = Math.random() * 4 + 2;
+                this.speedX = Math.random() * 2 - 1;
+            }
+            update() {
+                this.y += this.speedY;
+                this.x += this.speedX;
+                this.rotation += this.rotationSpeed;
+                
+                // Reset particle to top if it falls off screen
+                if (this.y > canvas.height) {
+                    if (numberOfPieces > 0) {
+                        this.y = -20;
+                        this.x = Math.random() * canvas.width;
+                        numberOfPieces--;
+                    }
+                }
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotation * Math.PI / 180);
+                ctx.fillStyle = this.color;
+                ctx.fillRect(-this.radius, -this.radius, this.radius * 2, this.radius * 2);
+                ctx.restore();
+            }
+        }
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            pieces.forEach((piece, index) => {
+                piece.update();
+                piece.draw();
+                // Performance safeguard: remove stale offscreen particles
+                if(piece.y > canvas.height && numberOfPieces <= 0) {
+                    pieces.splice(index, 1);
+                }
+            });
+            requestAnimationFrame(animate);
+        }
+
+        function triggerConfetti() {
+            numberOfPieces += 100; // adds burst of particles
+            for (let i = 0; i < 100; i++) {
+                pieces.push(new ConfettiParticle());
+            }
+        }
+
+        // Alternative greetings array
+        const wishes = [
+            "Wishing you a day filled with laughter, love, and wonderful surprises. May this upcoming year bring you endless joy, success, and everything your heart desires! ✨",
+            "Cheers to another trip around the sun! ☀️ May your day be as bright, beautiful, and absolutely special as you are to everyone around you!",
+            "Count your life by smiles, not tears. Count your age by friends, not years. Have a phenomenal birthday celebration today! 🥂",
+            "May the joy that you have spread in the past come back to you on this day. Wishing you a very happy and prosperous year ahead! 🎈"
+        ];
+        let currentWishIndex = 0;
+
+        function changeWishes() {
+            currentWishIndex = (currentWishIndex + 1) % wishes.length;
+            document.querySelector('p').textContent = wishes[currentWishIndex];
+            triggerConfetti();
+        }
+
+        // Fire initial confetti burst when the site opens
+        setTimeout(triggerConfetti, 500);
+        animate();
+    </script>
+</body>
+</html>
